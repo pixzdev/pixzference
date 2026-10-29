@@ -78,9 +78,14 @@ jobs:
 
       - name: Deploy prebuilt output to production
         run: |
+          # --archive=tgz packs the output into a single tarball (1 upload
+          # request) instead of one request per file. The Hobby plan caps CLI
+          # uploads at 5000 file requests / 24h ("api-upload-free") and this
+          # monorepo's traced functions blow through it; tgz also avoids the
+          # per-file size path entirely and uploads ~30% faster.
           for attempt in 1 2 3; do
             echo "::group::Deploy attempt ${attempt}"
-            if npx vercel@latest deploy --prebuilt --prod --scope pixz19s-projects --token=${{ secrets.VERCEL_TOKEN }}; then
+            if npx vercel@latest deploy --prebuilt --prod --archive=tgz --scope pixz19s-projects --token=${{ secrets.VERCEL_TOKEN }}; then
               echo "::endgroup::"
               echo "Deploy succeeded on attempt ${attempt}"
               exit 0
