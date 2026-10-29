@@ -99,7 +99,24 @@ type CriticalTableSpec = {
 
 // ──────────────── Environment Detection ────────────────
 
-export const isCloud = typeof globalThis.caches === "object" && globalThis.caches !== null;
+// Cloud/serverless detection. `globalThis.caches` exists on Cloudflare
+// Workers/Workerd. Vercel Functions (AWS Lambda) expose no such global — but
+// they do set VERCEL=1 / VERCEL_ENV, and the lambda filesystem is read-only
+// outside /tmp. Without this arm, a Vercel deployment takes the LOCAL tier:
+// resolveWritableDataDir() mkdir's a data dir under $HOME, throws EROFS at
+// import time (the proxy/middleware warm-up imports this chain at boot), and
+// every request 500s. With it, the runtime takes the in-memory sql.js tier
+// below (schema-complete, no writable FS needed). Local, Docker, VPS and
+// Electron builds set none of these env vars and keep the local tier. The
+// Next.js build phase is unaffected either way: isBuildPhase wins inside
+// getDbInstance() before any of this matters.
+export const isCloud =
+  (typeof globalThis.caches === "object" && globalThis.caches !== null) ||
+  process.env.VERCEL === "1" ||
+  process.env.VERCEL_ENV === "production" ||
+  process.env.VERCEL_ENV === "preview" ||
+  (typeof process.env.AWS_LAMBDA_FUNCTION_NAME === "string" &&
+    process.env.AWS_LAMBDA_FUNCTION_NAME !== "");
 
 // Next.js build workers sometimes drop NEXT_PHASE from their env, so
 // OMNIROUTE_BUILDING=1 (set by build-next-isolated.mjs and inherited by every
