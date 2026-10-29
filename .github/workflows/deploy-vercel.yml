@@ -96,3 +96,25 @@ jobs:
           done
           echo "All deploy attempts failed"
           exit 1
+
+      # Post-deploy diagnostics: hit the production alias (the plain
+      # <project>.vercel.app domain — never the custom domain in repo files)
+      # and stream the deployment's runtime logs while traffic is generated,
+      # so boot/runtime errors are captured in the CI log for debugging.
+      - name: Smoke test + capture runtime logs
+        if: always()
+        run: |
+          echo "=== HTTP smoke (production alias) ==="
+          for path in /healthz /login /api/v1/models; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "https://pixzference.vercel.app${path}" || echo "ERR")
+            echo "${path} -> ${code}"
+          done
+          echo "=== Runtime logs (45s stream while generating traffic) ==="
+          ( for i in 1 2 3 4 5 6 7 8; do
+              curl -s -o /dev/null --max-time 15 "https://pixzference.vercel.app/healthz" || true
+              curl -s -o /dev/null --max-time 15 "https://pixzference.vercel.app/login" || true
+              sleep 4
+            done ) &
+          TRAFFIC_PID=$!
+          timeout 50 npx vercel@latest logs https://pixzference.vercel.app --scope pixz19s-projects --token=${{ secrets.VERCEL_TOKEN }} || true
+          kill $TRAFFIC_PID 2>/dev/null || true
