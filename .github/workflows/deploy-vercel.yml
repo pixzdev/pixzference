@@ -1,0 +1,45 @@
+name: Deploy to Vercel (prebuilt)
+
+# Pixzference's Next.js build needs a ~4 GB V8 heap, which exceeds the Vercel
+# Hobby build container (~2 GB) and OOMs there. We therefore build here on a
+# 16 GB GitHub runner and ship the compiled output to Vercel as a prebuilt
+# deployment. Git-triggered builds on Vercel are disabled for this project
+# (Ignored Build Step = "exit 0"), so this workflow is the only deploy path.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Pull Vercel environment (production)
+        run: npx vercel@latest pull --yes --environment=production --scope pixz19s-projects --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build (Vercel Build Output API)
+        run: npx vercel@latest build --prod --scope pixz19s-projects --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy prebuilt output to production
+        run: npx vercel@latest deploy --prebuilt --prod --scope pixz19s-projects --token=${{ secrets.VERCEL_TOKEN }}
