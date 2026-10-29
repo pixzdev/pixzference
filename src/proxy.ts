@@ -27,30 +27,14 @@ export async function proxy(request: NextRequest) {
   // src/lib/system/headless.ts and docs/guides/HEADLESS.md.
   const headlessResponse = headlessGateResponse(request.nextUrl.pathname);
   if (headlessResponse) return headlessResponse;
-  // TEMPORARY (Vercel bring-up): /api/* requests die with a bare
-  // "Internal Server Error" on the serverless runtime, and the crash is NOT
-  // inside the pipeline call (a try/catch around the static import never
-  // fired) — it happens while EVALUATING the pipeline's module graph inside
-  // the middleware bundle. Vercel's runtime log stream is empty on Hobby, so
-  // load the pipeline dynamically inside the handler and surface whatever
-  // module-eval or runtime error escapes, message AND stack, in the response
-  // body until the root cause is fixed. Remove together with
-  // /boot-diagnostics.
-  try {
-    const { runAuthzPipeline } = await import("./server/authz/pipeline");
-    return await runAuthzPipeline(request, { enforce: true });
-  } catch (err: unknown) {
-    const detail =
-      err instanceof Error ? `${err.message}\n${err.stack ?? ""}` : String(err);
-    console.error("[proxy] authz pipeline failed:", detail);
-    return new Response(`[proxy] authz pipeline failed: ${detail}`, {
-      status: 500,
-      headers: {
-        "content-type": "text/plain; charset=utf-8",
-        "cache-control": "no-store",
-      },
-    });
-  }
+  // The root cause of the Vercel bring-up crash ("authz pipeline failed:
+  // [Migration] Could not resolve migrations directory") was a module-scope
+  // throw while evaluating the pipeline's module graph — migrationRunner.ts
+  // resolves its SQL directory at import time and threw inside the middleware
+  // bundle. The embedded-migration fallback (embedded.generated.ts) removed
+  // that throw, so the pipeline is statically imported again: one less
+  // per-request dynamic-import resolution on the hot path (cold start).
+  return await runAuthzPipeline(request, { enforce: true });
 }
 
 // Next compiles the middleware/proxy matcher from `regexp.source` only, dropping

@@ -40,6 +40,13 @@ jobs:
       - name: Cloud profile trim (i18n locale diet)
         run: node scripts/build/cloud-trim.mjs
 
+      # Move ~200 serverless-impossible API routes (local spawn, WS servers,
+      # native addons, host control) out of the build so they never compile
+      # into lambdas. Fail-closed import guard keeps any dir still referenced
+      # by kept code. Trimmed paths fall through to the JSON-404 catch-all.
+      - name: Cloud profile trim (serverless-impossible routes)
+        run: node scripts/build/cloud-trim-routes.mjs
+
       - name: Setup Node 24
         uses: actions/setup-node@v4
         with:

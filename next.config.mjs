@@ -249,25 +249,61 @@ const nextConfig = {
     ],
   },
   outputFileTracingRoot: projectRoot,
-  outputFileTracingIncludes: {
+  outputFileTracingIncludes: (() => {
     // Migration SQL and compression rule/filter JSON files are read via fs at
     // runtime and are NOT always auto-traced by webpack/turbopack.
-    "/*": [
-      "./src/lib/db/migrations/**/*",
-      "./src/mitm/server.cjs",
-      "./open-sse/services/compression/engines/rtk/filters/**/*.json",
-      "./open-sse/services/compression/rules/**/*.json",
-      "./open-sse/lib/deepseek-pow-hash.js",
-      "./open-sse/lib/deepseek-pow-worker.mjs",
-      // sql.js WASM is loaded at runtime by the sqljsAdapter fallback tier
-      // (better-sqlite3 → node:sqlite → sql.js). Next traces sql-wasm.js but can
-      // omit the runtime sql-wasm.wasm asset from the standalone bundle.
-      "./node_modules/sql.js/dist/sql-wasm.wasm",
-      // tiktoken is server-externalized below so Node selects its CommonJS entry.
-      // That entry reads the tokenizer WASM beside itself at runtime.
-      "./node_modules/tiktoken/tiktoken_bg.wasm",
-    ],
-  },
+    //
+    // NOTE on the key: a single `*` does not cross `/`, so `/*` only ever
+    // matched top-level routes — API functions never received these files
+    // (the on-serverless migrations failure that produced the embedded
+    // migrations module happened despite this entry). Cloud uses `/**` so
+    // the pattern actually reaches every function.
+    const full = {
+      "/*": [
+        "./src/lib/db/migrations/**/*",
+        "./src/mitm/server.cjs",
+        "./open-sse/services/compression/engines/rtk/filters/**/*.json",
+        "./open-sse/services/compression/rules/**/*.json",
+        "./open-sse/lib/deepseek-pow-hash.js",
+        "./open-sse/lib/deepseek-pow-worker.mjs",
+        // sql.js WASM is loaded at runtime by the sqljsAdapter fallback tier
+        // (better-sqlite3 → node:sqlite → sql.js). Next traces sql-wasm.js but can
+        // omit the runtime sql-wasm.wasm asset from the standalone bundle.
+        "./node_modules/sql.js/dist/sql-wasm.wasm",
+        // tiktoken is server-externalized below so Node selects its CommonJS entry.
+        // That entry reads the tokenizer WASM beside itself at runtime.
+        "./node_modules/tiktoken/tiktoken_bg.wasm",
+      ],
+    };
+
+    if (process.env.PIXZFERENCE_CLOUD !== "1") return full;
+
+    // Cloud (Vercel serverless) profile:
+    // - migrations ship INSIDE the bundle (src/lib/db/migrations/embedded.generated.ts);
+    //   the fs copy is dead weight in every lambda.
+    // - src/mitm/server.cjs drags express/http-proxy-middleware/selfsigned into
+    //   every function for a MITM listener that cannot exist on serverless.
+    // - compression rule/filter JSON + deepseek PoW worker only ride the routes
+    //   that consume them instead of all ~700.
+    // - the two runtime wasm assets stay global (small and broadly used — the
+    //   sql.js fallback tier and tiktoken tokenizer can load from any route).
+    return {
+      "/**": [
+        "./node_modules/sql.js/dist/sql-wasm.wasm",
+        "./node_modules/tiktoken/tiktoken_bg.wasm",
+      ],
+      "/api/v1/**": [
+        "./open-sse/services/compression/engines/rtk/filters/**/*.json",
+        "./open-sse/services/compression/rules/**/*.json",
+        "./open-sse/lib/deepseek-pow-hash.js",
+        "./open-sse/lib/deepseek-pow-worker.mjs",
+      ],
+      "/api/compression/**": [
+        "./open-sse/services/compression/engines/rtk/filters/**/*.json",
+        "./open-sse/services/compression/rules/**/*.json",
+      ],
+    };
+  })(),
   outputFileTracingExcludes: {
     // Planning/task docs, tests, and non-production worktrees are not runtime assets
     // and break standalone copies when broad NFT tracing pulls the whole repository into memory.
