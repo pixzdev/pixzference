@@ -1047,6 +1047,30 @@ export function getDbInstance(): SqliteDatabase {
     ensureUsageHistoryAccountIndex(memoryDb);
     ensureCallLogsColumns(memoryDb);
     ensureProviderConnectionsColumns(memoryDb);
+    // Cloud-tier migration parity with the local path below: the in-memory
+    // tier used to stop at the inline 001 schema, so every table introduced
+    // by a versioned migration (e.g. quota_recovery_tickets, 217) was
+    // missing, and the first boot step that touched it aborted the whole
+    // serverless instrumentation hook with "no such table" — observed live
+    // on Vercel: /healthz 503 "starting", /api/* 500, boot degraded. Seed
+    // the ledger exactly like the local tier (001 = inline schema) and run
+    // migrations 002+; on an empty :memory: database each migration is a
+    // fast structural statement, the FTS5-dependent ones self-defer on
+    // runtimes without the module (sql.js), and createPreMigrationBackup
+    // is a no-op for :memory:.
+    memoryDb.exec(`
+      CREATE TABLE IF NOT EXISTS _omniroute_migrations (
+        version TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      INSERT OR IGNORE INTO _omniroute_migrations (version, name)
+      VALUES ('001', 'initial_schema');
+    `);
+    runMigrations(memoryDb, { isNewDb: true, databaseExistedBeforeInitialization: false });
+    // Fresh installs need the same post-migration index guarantee as
+    // upgraded databases (mirrors the local path after runMigrations).
+    ensureUsageHistoryAccountIndex(memoryDb);
     setDb(memoryDb);
     return memoryDb;
   }
