@@ -27,12 +27,17 @@ export async function proxy(request: NextRequest) {
   // src/lib/system/headless.ts and docs/guides/HEADLESS.md.
   const headlessResponse = headlessGateResponse(request.nextUrl.pathname);
   if (headlessResponse) return headlessResponse;
-  // TEMPORARY (Vercel bring-up): the authz pipeline crashes for /api/*
-  // requests on the serverless runtime (plain-text "Internal Server Error").
-  // Vercel's runtime log stream is empty on Hobby, so surface the caught
-  // error — message AND stack — in the response body until the root cause
-  // is fixed. Remove together with /boot-diagnostics.
+  // TEMPORARY (Vercel bring-up): /api/* requests die with a bare
+  // "Internal Server Error" on the serverless runtime, and the crash is NOT
+  // inside the pipeline call (a try/catch around the static import never
+  // fired) — it happens while EVALUATING the pipeline's module graph inside
+  // the middleware bundle. Vercel's runtime log stream is empty on Hobby, so
+  // load the pipeline dynamically inside the handler and surface whatever
+  // module-eval or runtime error escapes, message AND stack, in the response
+  // body until the root cause is fixed. Remove together with
+  // /boot-diagnostics.
   try {
+    const { runAuthzPipeline } = await import("./server/authz/pipeline");
     return await runAuthzPipeline(request, { enforce: true });
   } catch (err: unknown) {
     const detail =
