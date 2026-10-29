@@ -69,6 +69,13 @@ jobs:
           echo "=== files larger than 2 MB ==="
           find .vercel/output -type f -size +2M -exec du -h {} \; 2>/dev/null | sort -rh | head -25
 
+      # The Next.js build trace (diagnostics/trace, ~105 MB for this monorepo)
+      # is optional build-analysis metadata, not a runtime asset. Uploaded as a
+      # single file it exceeds Vercel's 100 MB per-file limit and aborts the
+      # deploy with "File size limit exceeded (100 MB)", so strip it.
+      - name: Strip build diagnostics (exceeds 100 MB per-file upload limit)
+        run: rm -rf .vercel/output/diagnostics
+
       - name: Deploy prebuilt output to production
         run: |
           for attempt in 1 2 3; do
