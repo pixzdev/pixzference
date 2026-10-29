@@ -44,6 +44,35 @@ export async function register(registerNodejsFn?: () => Promise<void>) {
       const normalizedError = normalizeBootError(err);
       const message = normalizedError.message;
       console.error("[STARTUP] Fatal: instrumentation hook failed during boot:", message);
+
+      // Serverless (Vercel Functions): re-throwing here kills the server
+      // bootstrap — EVERY route (including /healthz, static pages and the
+      // login screen) then answers 500 with Next's built-in error page,
+      // which is exactly what the first production deployments showed.
+      // Record the failure on globalThis and let the server come up in a
+      // degraded state instead: unaffected routes keep working, affected
+      // subsystems fail individually with their real errors, and
+      // /api/boot-diagnostics (gated by the x-boot-debug header) reports
+      // the recorded cause. Local/Docker/VPS boots keep re-throwing so a
+      // developer never runs against a half-initialized gateway silently.
+      (globalThis as { __pixzBootError?: { message: string; stack?: string } }).__pixzBootError =
+        {
+          message,
+          stack: normalizedError instanceof Error ? normalizedError.stack : undefined,
+        };
+      const isServerlessRuntime =
+        process.env.VERCEL === "1" ||
+        process.env.VERCEL_ENV === "production" ||
+        process.env.VERCEL_ENV === "preview" ||
+        (typeof process.env.AWS_LAMBDA_FUNCTION_NAME === "string" &&
+          process.env.AWS_LAMBDA_FUNCTION_NAME !== "");
+      if (isServerlessRuntime) {
+        console.error(
+          "[STARTUP] Serverless runtime detected — continuing boot in degraded mode. " +
+            "Query /api/boot-diagnostics with header 'x-boot-debug: pixz' for the recorded cause."
+        );
+        return;
+      }
       throw normalizedError;
     }
   }
