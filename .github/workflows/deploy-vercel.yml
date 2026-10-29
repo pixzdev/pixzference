@@ -5,6 +5,12 @@ name: Deploy to Vercel (prebuilt)
 # 16 GB GitHub runner and ship the compiled output to Vercel as a prebuilt
 # deployment. Git-triggered builds on Vercel are disabled for this project
 # (Ignored Build Step = "exit 0"), so this workflow is the only deploy path.
+#
+# Cloud profile (PIXZFERENCE_CLOUD=1): the runner trims the deployment to a
+# serverless-friendly shape before building — curated i18n subset (see
+# scripts/build/cloud-trim.mjs), playwright/onnxruntime out of the lambda
+# trace (see next.config.mjs outputFileTracingExcludes) — so the prebuilt
+# upload stays small enough for `vercel deploy --prebuilt` to complete.
 
 on:
   push:
@@ -22,9 +28,17 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # Cloud profile + never download browser binaries on the build runner:
+      # browser automation cannot run inside serverless functions anyway.
+      PIXZFERENCE_CLOUD: "1"
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      PLAYWRIGHT_SKIP_BROWSER_GC: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Cloud profile trim (i18n locale diet)
+        run: node scripts/build/cloud-trim.mjs
 
       - name: Setup Node 24
         uses: actions/setup-node@v4
@@ -41,5 +55,32 @@ jobs:
       - name: Build (Vercel Build Output API)
         run: npx vercel@latest build --prod --scope pixz19s-projects --token=${{ secrets.VERCEL_TOKEN }}
 
+      - name: Measure build output
+        if: always()
+        run: |
+          echo "=== .vercel/output total ==="
+          du -sh .vercel/output || true
+          echo "=== top-level breakdown ==="
+          du -sh .vercel/output/* 2>/dev/null | sort -rh | head -10
+          echo "=== static breakdown ==="
+          du -sh .vercel/output/static/* 2>/dev/null | sort -rh | head -15
+          echo "=== functions breakdown (biggest) ==="
+          du -sh .vercel/output/functions/* 2>/dev/null | sort -rh | head -15
+          echo "=== files larger than 2 MB ==="
+          find .vercel/output -type f -size +2M -exec du -h {} \; 2>/dev/null | sort -rh | head -25
+
       - name: Deploy prebuilt output to production
-        run: npx vercel@latest deploy --prebuilt --prod --scope pixz19s-projects --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          for attempt in 1 2 3; do
+            echo "::group::Deploy attempt ${attempt}"
+            if npx vercel@latest deploy --prebuilt --prod --scope pixz19s-projects --token=${{ secrets.VERCEL_TOKEN }}; then
+              echo "::endgroup::"
+              echo "Deploy succeeded on attempt ${attempt}"
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "Deploy attempt ${attempt} failed; retrying after backoff..."
+            sleep $((attempt * 20))
+          done
+          echo "All deploy attempts failed"
+          exit 1

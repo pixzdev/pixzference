@@ -294,6 +294,24 @@ const nextConfig = {
       "**/.tmp/**",
       "**/electron/**",
       "**/docs/**",
+      // PIXZFERENCE_CLOUD=1 (Vercel prebuilt profile): browser-automation and
+      // native-model dependencies cannot execute inside serverless functions
+      // anyway — playwright needs chromium binaries plus process spawning,
+      // llmlingua/onnx workers are child_process workers, and local
+      // transformers embeddings lazy-import at runtime with webpackIgnore
+      // (falling back to API-based embeddings). Dropping them from the
+      // per-function trace keeps each lambda bundle — and the prebuilt
+      // upload — far smaller. Local / Electron / Docker builds leave the
+      // flag unset and keep the full graph, so those runtimes are unaffected.
+      ...(process.env.PIXZFERENCE_CLOUD === "1"
+        ? [
+            "**/node_modules/playwright/**",
+            "**/node_modules/playwright-core/**",
+            "**/node_modules/playwright-*.config/**",
+            "**/node_modules/onnxruntime-node/**",
+            "**/node_modules/@huggingface/transformers/**",
+          ]
+        : []),
     ],
   },
   serverExternalPackages: [
