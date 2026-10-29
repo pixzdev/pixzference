@@ -120,6 +120,17 @@ export async function ensureDbReadyForBoot(
   } catch {
     /* snapshot sync must never block boot */
   }
+
+  // Pixzference: on an ephemeral cloud instance whose snapshot replay produced
+  // no connections, seed the verified no-credential provider set so the gateway
+  // is useful straight from a cold start (skipped whenever any connection
+  // already exists — snapshot state or operator-added rows always win).
+  try {
+    const seed = await import("@/lib/db/pixzSeed");
+    await seed.seedDefaultProvidersIfEmpty();
+  } catch {
+    /* provider seeding must never block boot */
+  }
 }
 
 export function isBackgroundServicesDisabled(): boolean {
