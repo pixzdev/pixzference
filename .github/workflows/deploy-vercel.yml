@@ -109,6 +109,11 @@ jobs:
             code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "https://pixzference.vercel.app${path}" || echo "ERR")
             echo "${path} -> ${code}"
           done
+          echo "=== Boot diagnostics (degraded-mode boot error) ==="
+          curl -s --max-time 20 -H "x-boot-debug: pixz" "https://pixzference.vercel.app/boot-diagnostics" || true
+          echo
+          echo "=== healthz headers ==="
+          curl -sI --max-time 20 "https://pixzference.vercel.app/healthz" || true
           echo "=== Runtime logs (45s stream while generating traffic) ==="
           ( for i in 1 2 3 4 5 6 7 8; do
               curl -s -o /dev/null --max-time 15 "https://pixzference.vercel.app/healthz" || true
