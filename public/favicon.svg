@@ -1,0 +1,17 @@
+<svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pixzGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff8a3d"/>
+      <stop offset="100%" stop-color="#8a5cf6"/>
+    </linearGradient>
+    <linearGradient id="pixzCore" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff8a3d"/>
+      <stop offset="100%" stop-color="#ffa260"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="29" stroke="url(#pixzGrad)" stroke-width="4" stroke-linecap="round" stroke-dasharray="46 26 12 30"/>
+  <path d="M32 10 L50.4 20.5 L50.4 43.5 L32 54 L13.6 43.5 L13.6 20.5 Z" stroke="url(#pixzGrad)" stroke-width="3" fill="#0f1117"/>
+  <path d="M26 24 L26 40 M26 24 L38 40 M38 24 L38 40" stroke="url(#pixzCore)" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="32" cy="3.5" r="3.5" fill="#ff8a3d"/>
+  <circle cx="32" cy="60.5" r="2.5" fill="#8a5cf6"/>
+</svg>

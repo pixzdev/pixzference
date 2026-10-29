@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "NEXT_DIST_DIR=.next OMNIROUTE_SKIP_STANDALONE=1 npm run build",
+  "functions": {
+    "src/app/api/**/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}

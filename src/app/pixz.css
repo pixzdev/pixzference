@@ -1,0 +1,510 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PIXZFERENCE DESIGN LAYER — motion engine, multi-theme, density & radius system
+   ──────────────────────────────────────────────────────────────────────────────
+   This layer is additive on top of the OmniRoute CI UI Kit token bridge.
+   Everything is driven by three data attributes on <html>:
+
+     data-pixz-theme    ember | aurora | neon | matrix | rosewood | ocean | candy | mono
+     data-pixz-density  compact | cozy | spacious
+     data-pixz-radius   sharp | soft | round
+     data-pixz-motion   "on" (default) | "off" (respects prefers-reduced-motion too)
+
+   Tokens keep their OmniRoute NAMES; themes only RE-POINT the underlying
+   --ci-* / --color-* values, so every existing Tailwind utility keeps working.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. THEMES ────────────────────────────────────────────────────────────────
+   Light-friendly themes re-point only the accent family; dark-native themes
+   also carry their own surface ramp so they look right in any base scheme.     */
+
+/* Ember — warm amber/orange, Pixzference signature */
+:root[data-pixz-theme="ember"],
+.ci-theme[data-pixz-theme="ember"] {
+  --ci-color-accent: #ff8a3d;
+  --ci-color-accent-hover: #ffa260;
+  --ci-color-accent-active: #f2761d;
+  --ci-color-accent-foreground: #231000;
+  --ci-color-accent-surface-subtle: #fff4e8;
+  --ci-color-accent-surface-strong: #ffe6cc;
+  --color-primary-ink: #8a3e00;
+  --pixz-glow: 255, 138, 61;
+}
+
+/* Aurora — teal→violet gradient accent */
+:root[data-pixz-theme="aurora"],
+.ci-theme[data-pixz-theme="aurora"] {
+  --ci-color-accent: #14e0b0;
+  --ci-color-accent-hover: #3ceac0;
+  --ci-color-accent-active: #0cc49a;
+  --ci-color-accent-foreground: #00281e;
+  --ci-color-accent-surface-subtle: #e6fbf5;
+  --ci-color-accent-surface-strong: #c9f6ea;
+  --color-primary-ink: #006450;
+  --pixz-glow: 20, 224, 176;
+}
+
+/* Neon — dark-native cyberpunk magenta/cyan */
+:root[data-pixz-theme="neon"],
+.ci-theme[data-pixz-theme="neon"] {
+  --ci-color-accent: #ff2fd0;
+  --ci-color-accent-hover: #ff5cdc;
+  --ci-color-accent-active: #e01fbb;
+  --ci-color-accent-foreground: #1c0016;
+  --ci-color-accent-surface-subtle: #2b0a24;
+  --ci-color-accent-surface-strong: #46123b;
+  --color-primary-ink: #ffa8ec;
+  --ci-color-background: #0a0510;
+  --ci-color-canvas: #0a0510;
+  --ci-color-surface: #130a1c;
+  --ci-color-surface-subtle: #1a0f26;
+  --ci-color-surface-muted: #241536;
+  --ci-color-foreground: #f2e3ff;
+  --ci-color-text: #f2e3ff;
+  --ci-color-text-muted: #a98fc7;
+  --ci-color-border-subtle: #2e1b44;
+  --ci-color-border: #3f2460;
+  --pixz-glow: 255, 47, 208;
+  color-scheme: dark;
+}
+
+/* Matrix — dark-native terminal green */
+:root[data-pixz-theme="matrix"],
+.ci-theme[data-pixz-theme="matrix"] {
+  --ci-color-accent: #38ff7a;
+  --ci-color-accent-hover: #6affa2;
+  --ci-color-accent-active: #22e062;
+  --ci-color-accent-foreground: #00190a;
+  --ci-color-accent-surface-subtle: #04220f;
+  --ci-color-accent-surface-strong: #083a1b;
+  --color-primary-ink: #7dffb0;
+  --ci-color-background: #030905;
+  --ci-color-canvas: #030905;
+  --ci-color-surface: #07130b;
+  --ci-color-surface-subtle: #0a1a0f;
+  --ci-color-surface-muted: #102617;
+  --ci-color-foreground: #d8ffe4;
+  --ci-color-text: #d8ffe4;
+  --ci-color-text-muted: #6fae86;
+  --ci-color-border-subtle: #12301c;
+  --ci-color-border: #1d472a;
+  --pixz-glow: 56, 255, 122;
+  color-scheme: dark;
+}
+
+/* Rosewood — elegant rose/mauve */
+:root[data-pixz-theme="rosewood"],
+.ci-theme[data-pixz-theme="rosewood"] {
+  --ci-color-accent: #e5497a;
+  --ci-color-accent-hover: #f06897;
+  --ci-color-accent-active: #d13263;
+  --ci-color-accent-foreground: #2c0412;
+  --ci-color-accent-surface-subtle: #fdeaef;
+  --ci-color-accent-surface-strong: #fbd3de;
+  --color-primary-ink: #9c1f4c;
+  --pixz-glow: 229, 73, 122;
+}
+
+/* Ocean — calm azure blue */
+:root[data-pixz-theme="ocean"],
+.ci-theme[data-pixz-theme="ocean"] {
+  --ci-color-accent: #2e8bff;
+  --ci-color-accent-hover: #57a3ff;
+  --ci-color-accent-active: #1470e6;
+  --ci-color-accent-foreground: #001433;
+  --ci-color-accent-surface-subtle: #e8f1ff;
+  --ci-color-accent-surface-strong: #cde2ff;
+  --color-primary-ink: #0b4db3;
+  --pixz-glow: 46, 139, 255;
+}
+
+/* Candy — playful bubblegum, light-native */
+:root[data-pixz-theme="candy"],
+.ci-theme[data-pixz-theme="candy"] {
+  --ci-color-accent: #8a5cf6;
+  --ci-color-accent-hover: #a67dff;
+  --ci-color-accent-active: #7443e0;
+  --ci-color-accent-foreground: #15003a;
+  --ci-color-accent-surface-subtle: #f1ecfe;
+  --ci-color-accent-surface-strong: #e2d7fc;
+  --color-primary-ink: #5b2bc7;
+  --pixz-glow: 138, 92, 246;
+}
+
+/* Mono — high-contrast monochrome ink */
+:root[data-pixz-theme="mono"],
+.ci-theme[data-pixz-theme="mono"] {
+  --ci-color-accent: #171a1f;
+  --ci-color-accent-hover: #343a45;
+  --ci-color-accent-active: #000000;
+  --ci-color-accent-foreground: #ffffff;
+  --ci-color-accent-surface-subtle: #eceef1;
+  --ci-color-accent-surface-strong: #d6dae0;
+  --color-primary-ink: #171a1f;
+  --pixz-glow: 23, 26, 31;
+}
+/* Mono needs its own dark flip */
+:root[data-pixz-theme="mono"].dark,
+.dark[data-pixz-theme="mono"] {
+  --ci-color-accent: #f4f6f9;
+  --ci-color-accent-hover: #ffffff;
+  --ci-color-accent-active: #d9dee6;
+  --ci-color-accent-foreground: #0b0d10;
+  --ci-color-accent-surface-subtle: #1c2026;
+  --ci-color-accent-surface-strong: #313842;
+  --color-primary-ink: #f4f6f9;
+}
+
+/* Neon & Matrix stay dark even when the base scheme is light */
+:root[data-pixz-theme="neon"]:not(.dark),
+:root[data-pixz-theme="matrix"]:not(.dark) {
+  --ci-color-background: var(--pixz-dark-bg, #0a0510);
+  color-scheme: dark;
+}
+:root[data-pixz-theme="matrix"]:not(.dark) {
+  --pixz-dark-bg: #030905;
+}
+
+/* ── 2. DENSITY (spacing scale) ─────────────────────────────────────────────── */
+:root[data-pixz-density="compact"] {
+  --pixz-space-scale: 0.82;
+  --pixz-card-pad: 0.75rem;
+  --pixz-row-h: 2rem;
+  --pixz-text-scale: 0.94;
+}
+:root[data-pixz-density="cozy"] {
+  --pixz-space-scale: 1;
+  --pixz-card-pad: 1rem;
+  --pixz-row-h: 2.375rem;
+  --pixz-text-scale: 1;
+}
+:root[data-pixz-density="spacious"] {
+  --pixz-space-scale: 1.22;
+  --pixz-card-pad: 1.375rem;
+  --pixz-row-h: 2.75rem;
+  --pixz-text-scale: 1.03;
+}
+/* Density applies through the kit's own spacing tokens where safe */
+[data-pixz-density="compact"] .ci-card,
+[data-pixz-density="compact"] [data-slot="card"] {
+  padding: var(--pixz-card-pad);
+}
+[data-pixz-density="spacious"] .ci-card,
+[data-pixz-density="spacious"] [data-slot="card"] {
+  padding: var(--pixz-card-pad);
+}
+
+/* ── 3. RADIUS STYLE ────────────────────────────────────────────────────────── */
+:root[data-pixz-radius="sharp"] {
+  --ci-radius-surface: 2px;
+  --ci-radius-control: 3px;
+  --radius: 2px;
+  --radius-control: 3px;
+}
+:root[data-pixz-radius="soft"] {
+  --ci-radius-surface: 0.5rem;
+  --ci-radius-control: 0.625rem;
+  --radius: 0.5rem;
+  --radius-control: 0.625rem;
+}
+:root[data-pixz-radius="round"] {
+  --ci-radius-surface: 1rem;
+  --ci-radius-control: 1.25rem;
+  --radius: 1rem;
+  --radius-control: 1.25rem;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   4. MOTION ENGINE — keyframes
+   ══════════════════════════════════════════════════════════════════════════════ */
+@keyframes pixz-fade-up {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes pixz-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pixz-fade-down {
+  from { opacity: 0; transform: translate3d(0, -14px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes pixz-slide-left {
+  from { opacity: 0; transform: translate3d(28px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes pixz-slide-right {
+  from { opacity: 0; transform: translate3d(-28px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes pixz-scale-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes pixz-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes pixz-shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+@keyframes pixz-shine-sweep {
+  from { transform: translateX(-120%) skewX(-18deg); }
+  to { transform: translateX(240%) skewX(-18deg); }
+}
+@keyframes pixz-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--pixz-glow, 255, 138, 61), 0.42); }
+  50% { box-shadow: 0 0 22px 4px rgba(var(--pixz-glow, 255, 138, 61), 0.22); }
+}
+@keyframes pixz-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+@keyframes pixz-spin-slow {
+  to { transform: rotate(360deg); }
+}
+@keyframes pixz-gradient-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes pixz-border-spin {
+  to { --pixz-border-angle: 360deg; }
+}
+@keyframes pixz-blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(38px, -26px) scale(1.12); }
+  66% { transform: translate(-24px, 20px) scale(0.94); }
+}
+@keyframes pixz-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+@keyframes pixz-progress-indeterminate {
+  0% { transform: translateX(-100%) scaleX(0.3); }
+  50% { transform: translateX(60%) scaleX(0.55); }
+  100% { transform: translateX(230%) scaleX(0.3); }
+}
+@keyframes pixz-toast-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@property --pixz-border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* ── 5. MOTION UTILITIES ────────────────────────────────────────────────────── */
+[data-pixz-motion="on"] .pixz-fade-up { animation: pixz-fade-up 0.55s cubic-bezier(0.22, 0.8, 0.3, 1) both; }
+[data-pixz-motion="on"] .pixz-fade-down { animation: pixz-fade-down 0.5s cubic-bezier(0.22, 0.8, 0.3, 1) both; }
+[data-pixz-motion="on"] .pixz-fade-in { animation: pixz-fade-in 0.6s ease both; }
+[data-pixz-motion="on"] .pixz-slide-left { animation: pixz-slide-left 0.5s cubic-bezier(0.22, 0.8, 0.3, 1) both; }
+[data-pixz-motion="on"] .pixz-slide-right { animation: pixz-slide-right 0.5s cubic-bezier(0.22, 0.8, 0.3, 1) both; }
+[data-pixz-motion="on"] .pixz-scale-in { animation: pixz-scale-in 0.45s cubic-bezier(0.22, 0.8, 0.3, 1) both; }
+[data-pixz-motion="on"] .pixz-pop { animation: pixz-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* Stagger: children cascade in */
+[data-pixz-motion="on"] .pixz-stagger > * {
+  animation: pixz-fade-up 0.5s cubic-bezier(0.22, 0.8, 0.3, 1) both;
+}
+[data-pixz-motion="on"] .pixz-stagger > *:nth-child(1) { animation-delay: 0.03s; }
+[data-pixz-motion="on"] .pixz-stagger > *:nth-child(2) { animation-delay: 0.08s; }
+[data-pixz-motion="on"] .pixz-stagger > *:nth-child(3) { animation-delay: 0.13s; }
+[data-pixz-motion="on"] .pixz-stagger > *:nth-child(4) { animation-delay: 0.18s; }
+[data-pixz-motion="on"] .pixz-stagger > *:nth-child(5) { animation-delay: 0.23s; }
+[data-pixz-motion="on"] .pixz-stagger > *:nth-child(6) { animation-delay: 0.28s; }
+[data-pixz-motion="on"] .pixz-stagger > *:nth-child(7) { animation-delay: 0.33s; }
+[data-pixz-motion="on"] .pixz-stagger > *:nth-child(8) { animation-delay: 0.38s; }
+[data-pixz-motion="on"] .pixz-stagger > *:nth-child(n+9) { animation-delay: 0.43s; }
+
+/* Dashboard page transitions */
+[data-pixz-motion="on"] .pixz-page { animation: pixz-fade-up 0.42s cubic-bezier(0.22, 0.8, 0.3, 1) both; }
+
+/* Interactive card: hover lift + themed glow */
+.pixz-card {
+  transition: transform 0.28s cubic-bezier(0.22, 0.8, 0.3, 1),
+              box-shadow 0.28s cubic-bezier(0.22, 0.8, 0.3, 1),
+              border-color 0.28s ease;
+  will-change: transform;
+}
+[data-pixz-motion="on"] .pixz-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 32px -6px rgba(var(--pixz-glow, 255, 138, 61), 0.24),
+              0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: rgba(var(--pixz-glow, 255, 138, 61), 0.4);
+}
+
+/* Button shine sweep on hover */
+.pixz-shine { position: relative; overflow: hidden; }
+.pixz-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+  pointer-events: none;
+}
+[data-pixz-motion="on"] .pixz-shine:hover::after { animation: pixz-shine-sweep 0.8s ease; }
+
+/* Glassmorphism panel */
+.pixz-glass {
+  background: color-mix(in srgb, var(--ci-color-surface) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(1.35);
+  -webkit-backdrop-filter: blur(14px) saturate(1.35);
+  border: 1px solid color-mix(in srgb, var(--ci-color-border-subtle) 80%, transparent);
+}
+
+/* Animated gradient text */
+.pixz-gradient-text {
+  background: linear-gradient(100deg,
+    var(--ci-color-accent),
+    var(--ci-chart-3, #8a5cf6),
+    var(--ci-color-accent));
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+[data-pixz-motion="on"] .pixz-gradient-text { animation: pixz-gradient-pan 6s ease-in-out infinite; }
+
+/* Animated conic border */
+.pixz-animated-border { position: relative; }
+.pixz-animated-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--pixz-border-angle, 0deg),
+    transparent 12%, rgba(var(--pixz-glow, 255, 138, 61), 0.85) 22%,
+    transparent 34%, transparent 62%,
+    rgba(var(--pixz-glow, 255, 138, 61), 0.5) 72%, transparent 84%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+[data-pixz-motion="on"] .pixz-animated-border::before { animation: pixz-spin-slow 3.4s linear infinite; }
+
+/* Live status dot */
+.pixz-live-dot {
+  width: 8px; height: 8px; border-radius: 9999px;
+  background: var(--ci-color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ci-color-accent) 25%, transparent);
+}
+[data-pixz-motion="on"] .pixz-live-dot { animation: pixz-pulse-dot 1.6s ease-in-out infinite; }
+
+/* Floating accent */
+[data-pixz-motion="on"] .pixz-float { animation: pixz-float 5s ease-in-out infinite; }
+
+/* Indeterminate progress bar */
+.pixz-progress { position: relative; overflow: hidden; border-radius: 9999px; }
+.pixz-progress > i {
+  position: absolute; inset: 0 auto 0 0; width: 45%;
+  background: var(--ci-color-accent);
+  border-radius: inherit;
+  animation: pixz-progress-indeterminate 1.4s cubic-bezier(0.4, 0, 0.4, 1) infinite;
+}
+
+/* Toast entrance */
+[data-pixz-motion="on"] .pixz-toast { animation: pixz-toast-in 0.32s cubic-bezier(0.22, 0.8, 0.3, 1) both; }
+
+/* Login/landing aurora background: drifting color blobs */
+.pixz-bg-aurora {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.pixz-bg-aurora::before,
+.pixz-bg-aurora::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 46vmax; height: 46vmax;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.pixz-bg-aurora::before {
+  background: radial-gradient(circle at 35% 35%,
+    rgba(var(--pixz-glow, 255, 138, 61), 0.55), transparent 65%);
+  top: -14vmax; left: -10vmax;
+}
+.pixz-bg-aurora::after {
+  background: radial-gradient(circle at 65% 65%,
+    rgba(120, 90, 255, 0.35), transparent 65%);
+  bottom: -16vmax; right: -12vmax;
+}
+[data-pixz-motion="on"] .pixz-bg-aurora::before { animation: pixz-blob-drift 18s ease-in-out infinite; }
+[data-pixz-motion="on"] .pixz-bg-aurora::after { animation: pixz-blob-drift 22s ease-in-out infinite reverse; }
+
+/* Grid pattern backdrop (subtle, theme-aware) */
+.pixz-bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--ci-color-border-subtle) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--ci-color-border-subtle) 55%, transparent) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+/* Skeleton shimmer while loading */
+.pixz-skeleton {
+  background: linear-gradient(100deg,
+    var(--ci-color-surface-muted) 40%,
+    var(--ci-color-surface-subtle) 50%,
+    var(--ci-color-surface-muted) 60%);
+  background-size: 200% 100%;
+  animation: pixz-shimmer 1.4s linear infinite;
+  border-radius: var(--ci-radius-control, 0.5rem);
+}
+
+/* Focus ring glow for inputs/buttons */
+[data-pixz-motion="on"] .pixz-focus-glow:focus-visible {
+  outline: 2px solid var(--ci-color-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(var(--pixz-glow, 255, 138, 61), 0.18);
+}
+
+/* Viewport-aware fluid type — phones get slightly tighter headings, 4K gets airier */
+.pixz-fluid-h1 { font-size: clamp(1.65rem, 1.1rem + 2.4vw, 2.4rem); line-height: 1.15; }
+.pixz-fluid-h2 { font-size: clamp(1.3rem, 1rem + 1.4vw, 1.7rem); line-height: 1.25; }
+.pixz-fluid-body { font-size: clamp(0.875rem, 0.84rem + 0.25vw, 1rem); }
+
+/* Compact touch targets stay >=40px on touch devices (a11y) */
+@media (pointer: coarse) {
+  [data-pixz-density="compact"] button,
+  [data-pixz-density="compact"] [role="button"],
+  [data-pixz-density="compact"] a[data-slot="button"] {
+    min-height: 40px;
+  }
+}
+
+/* ── 6. REDUCED MOTION (WCAG 2.3.3) ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .pixz-fade-up, .pixz-fade-down, .pixz-fade-in, .pixz-slide-left, .pixz-slide-right,
+  .pixz-scale-in, .pixz-pop, .pixz-stagger > *, .pixz-page,
+  .pixz-gradient-text, .pixz-animated-border::before, .pixz-live-dot,
+  .pixz-float, .pixz-bg-aurora::before, .pixz-bg-aurora::after,
+  .pixz-shine::after, .pixz-skeleton, .pixz-progress > i {
+    animation: none !important;
+  }
+  .pixz-card, .pixz-card:hover { transition: none !important; transform: none !important; }
+}
+/* Explicit motion-off kills everything the media query would too */
+[data-pixz-motion="off"] .pixz-fade-up, [data-pixz-motion="off"] .pixz-fade-down,
+[data-pixz-motion="off"] .pixz-fade-in, [data-pixz-motion="off"] .pixz-slide-left,
+[data-pixz-motion="off"] .pixz-slide-right, [data-pixz-motion="off"] .pixz-scale-in,
+[data-pixz-motion="off"] .pixz-pop, [data-pixz-motion="off"] .pixz-stagger > *,
+[data-pixz-motion="off"] .pixz-page, [data-pixz-motion="off"] .pixz-gradient-text,
+[data-pixz-motion="off"] .pixz-animated-border::before, [data-pixz-motion="off"] .pixz-live-dot,
+[data-pixz-motion="off"] .pixz-float, [data-pixz-motion="off"] .pixz-bg-aurora::before,
+[data-pixz-motion="off"] .pixz-bg-aurora::after, [data-pixz-motion="off"] .pixz-shine::after,
+[data-pixz-motion="off"] .pixz-card:hover {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
